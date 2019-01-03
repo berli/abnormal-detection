@@ -138,7 +138,7 @@ class Seq2Seq():
         Adds an encoder to the model architecture.
         """
         cells = [self._lstm_cell(self.hidden_size) for _ in range(self.num_layers)]
-        multilstm = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
+        multilstm = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
 
         _, enc_state = tf.nn.dynamic_rnn(
             multilstm,
@@ -204,11 +204,11 @@ class Seq2Seq():
         """
         Returns LSTM cell with dropout.
         """
-        cell = tf.contrib.rnn.LSTMCell(
+        cell = tf.nn.rnn_cell.LSTMCell(
             hidden_size,
             initializer=tf.contrib.layers.xavier_initializer())
 
-        cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout)
+        cell = tf.nn.rnn_cell.DropoutWrapper(cell, output_keep_prob=self.dropout)
 
         return cell
 
