@@ -160,7 +160,7 @@ class Seq2Seq():
             time_major=False)
 
         cells = [self._lstm_cell(self.hidden_size) for _ in range(self.num_layers)]
-        dec_cell = tf.contrib.rnn.MultiRNNCell(cells, state_is_tuple=True)
+        dec_cell = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
 
         decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, helper, enc_state)
 
