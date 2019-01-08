@@ -1,9 +1,6 @@
 
 # coding: utf-8
 
-# In[32]:
-
-
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
@@ -21,13 +18,8 @@ from utils.vocab import Vocabulary
 from utils.reader import Data
 from utils.utils import print_progress, create_checkpoints_dir
 
-
-# In[3]:
-
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
 
 # Main model parameters:
 # - *batch_size* - the number of samples in a batch
@@ -38,9 +30,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 # - *std_factor* - the number of stds that is used for defining a model threshold
 # - *dropout* - the probability that each element is kept
 # - *vocab* - the Vocabulary object
-
-# In[4]:
-
 
 params = {
     "batch_size": 128,
@@ -67,9 +56,6 @@ d = Data(path_normal_data)
 
 # In this part of the code the Sequence-to-Sequence model for determining anomalies is defined.  
 # The same sequences are fed to the input and output of the model. So the model learns to reconstruct them. At the stage of training and validation, only valid samples are submitted to the model. The validation phase is needed in order to initialize the threshold value.
-
-# In[25]:
-
 
 class Seq2Seq():
     def __init__(self, args):
@@ -221,11 +207,7 @@ class Seq2Seq():
 
         return weight, bias
 
-
 # # Train
-
-# In[27]:
-
 
 class Trainer():
 
@@ -289,16 +271,8 @@ class Trainer():
                     print("Training is finished.")
                     break
 
-
-# In[7]:
-
-
 model = Seq2Seq(params)
 t = Trainer(params["batch_size"], params["checkpoints"], params["dropout"])
-
-
-# In[8]:
-
 
 num_steps = 10 ** 6
 num_epochs = 60
@@ -307,7 +281,6 @@ train_gen = d.train_generator(params["batch_size"], num_epochs)
 train_size = d.train_size
 
 t.train(model, train_gen, train_size, num_steps, num_epochs)
-
 
 # # Parameters setting
 
@@ -456,83 +429,46 @@ class Predictor():
                     
             print(Fore.BLACK + '', end='')
 
-
-# In[10]:
-
-
 p = Predictor(params["checkpoints"], params["std_factor"], params["vocab"])
-
-
-# In[11]:
-
 
 val_gen = d.val_generator()
 threshold = p.set_threshold(val_gen)
-
 
 # ### Benign samples 
 
 # Here FP samples are showed and FP rate is computed.
 
-# In[12]:
-
-
 test_gen = d.test_generator()
 valid_preds, valid_loss = p.predict(test_gen)
-
-
-# In[13]:
-
 
 print('Number of FP: ', np.sum(valid_preds))
 print('Number of samples: ', len(valid_preds))
 print('FP rate: {:.4f}'.format(np.sum(valid_preds) / len(valid_preds)))
 
-
 # ### Anomalous samples 
 
 # Here TP samples are showed and TP rate is computed.
-
-# In[14]:
-
-
 pred_data = Data(path_anomaly_data, predict=True)
 pred_gen = pred_data.predict_generator()
 anomaly_preds, anomaly_loss = p.predict(pred_gen)
-
-
-# In[15]:
-
 
 print('Number of TP: ', np.sum(anomaly_preds))
 print('Number of samples: ', len(anomaly_preds))
 print('TP rate: {:.4f}'.format(np.sum(anomaly_preds) / len(anomaly_preds)))
 
-
 # # Testing 
 
 # To evaluate the results, let's compute metrics of quality: precision, recall, ROC-AUC.
-
-# In[16]:
-
 
 y_true = np.concatenate(([0] * len(valid_preds), [1] * len(anomaly_preds)), axis=0)
 preds = np.concatenate((valid_preds, anomaly_preds), axis=0)
 loss_pred = np.concatenate((valid_loss, anomaly_loss), axis=0)
 assert len(y_true)==len(loss_pred)
 
-
-# In[17]:
-
-
 precision = precision_score(y_true, preds)
 recall = recall_score(y_true, preds)
 print('Precision: {:.4f}'.format(precision))
 print('Recall: {:.4f}'.format(recall))
-
-
-# In[18]:
-
 
 fpr, tpr, _ = roc_curve(y_true, loss_pred)
 roc_auc = auc(fpr, tpr)
