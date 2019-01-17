@@ -51,9 +51,7 @@ params["vocab"] = vocab
 
 d = Data(path_normal_data)
 
-
 # # Model 
-
 # In this part of the code the Sequence-to-Sequence model for determining anomalies is defined.  
 # The same sequences are fed to the input and output of the model. So the model learns to reconstruct them. At the stage of training and validation, only valid samples are submitted to the model. The validation phase is needed in order to initialize the threshold value.
 
@@ -208,7 +206,6 @@ class Seq2Seq():
         return weight, bias
 
 # # Train
-
 class Trainer():
 
     def __init__(self, batch_size, checkpoints_path, dropout):
@@ -283,16 +280,12 @@ train_size = d.train_size
 t.train(model, train_gen, train_size, num_steps, num_epochs)
 
 # # Parameters setting
-
 # In this part, the threshold setting is introduced. *Set_threshold* calculates the threshold value using *mean* and *std* of loss values of valid samples. 
 # 
 # At the testing stage, the model receives benign and anomalous samples.
 # For each sample, the value of loss is calculated. If this value is greater than the threshold, then the request is considered anomalous.
 # 
 # If you want to use special checkpoints without training a model, you can import a model from *params["checkpoint"]* .
-
-# In[9]:
-
 
 class Predictor():
     def __init__(self, checkpoints_path, std_factor, vocab):
@@ -435,7 +428,6 @@ val_gen = d.val_generator()
 threshold = p.set_threshold(val_gen)
 
 # ### Benign samples 
-
 # Here FP samples are showed and FP rate is computed.
 
 test_gen = d.test_generator()
