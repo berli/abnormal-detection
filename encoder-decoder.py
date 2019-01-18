@@ -21,7 +21,7 @@ train_y = y.copy()
 
 noise_factor = 0.5
 train_y += np.random.randn(105) * noise_factor
-
+#展示原始数据
 l1, = plt.plot(x[:85], train_y[:85], 'yo', label = 'training samples')
 plt.plot(x[:85], y[:85], 'y:')
 l2, = plt.plot(x[85:], train_y[85:], 'co', label = 'test samples')
@@ -50,8 +50,8 @@ def generate_train_samples(x = train_data_x, batch_size = 10, input_seq_len = in
     total_start_points = len(x) - input_seq_len - output_seq_len
     start_x_idx = np.random.choice(range(total_start_points), batch_size)
 
-    input_seq_x = [x[i:(i+input_seq_len)] for i in start_x_idx]
-    output_seq_x = [x[(i+input_seq_len):(i+input_seq_len+output_seq_len)] for i in start_x_idx]
+    input_seq_x = [ x[i:(i+input_seq_len) ] for i in start_x_idx]
+    output_seq_x = [ x[(i+input_seq_len):(i+input_seq_len+output_seq_len)] for i in start_x_idx]
 
     input_seq_y = [generate_y_values(x) for x in input_seq_x]
     output_seq_y = [generate_y_values(x) for x in output_seq_x]
@@ -302,7 +302,6 @@ print("Checkpoint saved at: ", save_path)
 
 #预测 
 #我们将模型用在测试集中进行预测
-
 test_seq_input = true_signal(train_data_x[-15:])
 
 rnn_model = build_graph(feed_previous=True)

@@ -1,10 +1,5 @@
 
 # coding: utf-8
-
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-
 import os
 import numpy as np
 import tensorflow as tf
@@ -61,6 +56,7 @@ class Seq2Seq():
 
         self.batch_size = tf.placeholder(tf.int32, [], name='batch_size')
         self.max_seq_len = tf.placeholder(tf.int32, [], name='max_seq_len')
+
         self.inputs = tf.placeholder(tf.int32, [None, None], name='inputs')
         self.targets = tf.placeholder(tf.int32, [None, None], name='targets')
         self.lengths = tf.placeholder(tf.int32, [None, ], name='lengths')
@@ -78,6 +74,8 @@ class Seq2Seq():
         vocab_size = len(self.vocab.vocab)
 
         # Embeddings for inputs
+        #tf.random_uniform_initializer(minval = 0, maxval = None, seed = None, dtype = dtypes.float32)：
+        #均匀分布初始化函数
         embed_initializer = tf.random_uniform_initializer(-np.sqrt(3), np.sqrt(3))
 
         with tf.variable_scope('embedding'):
@@ -87,6 +85,7 @@ class Seq2Seq():
                 initializer=embed_initializer,
                 dtype=tf.float32)
 
+            #用法主要是选取一个张量里面索引对应的元素
             enc_embed_input = tf.nn.embedding_lookup(embeds, self.inputs)
             
         enc_state = self._encoder(enc_embed_input)
@@ -118,9 +117,7 @@ class Seq2Seq():
         self.saver = tf.train.Saver()
         
     def _encoder(self, enc_embed_input):
-        """
-        Adds an encoder to the model architecture.
-        """
+        #编码器
         cells = [self._lstm_cell(self.hidden_size) for _ in range(self.num_layers)]
         multilstm = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
 
@@ -134,18 +131,18 @@ class Seq2Seq():
         return enc_state
     
     def _decoder(self, enc_state, dec_embed_input):
-        """
-        Adds a decoder to the model architecture.
-        """
+        #解码器
         output_lengths = tf.ones([self.batch_size], tf.int32) * self.max_seq_len
         helper = tf.contrib.seq2seq.TrainingHelper(
             dec_embed_input,
             output_lengths,
             time_major=False)
 
+        #构建多层LSTM
         cells = [self._lstm_cell(self.hidden_size) for _ in range(self.num_layers)]
         dec_cell = tf.nn.rnn_cell.MultiRNNCell(cells, state_is_tuple=True)
 
+        #调用解码函数
         decoder = tf.contrib.seq2seq.BasicDecoder(dec_cell, helper, enc_state)
 
         dec_outputs = tf.contrib.seq2seq.dynamic_decode(
@@ -157,14 +154,13 @@ class Seq2Seq():
         return dec_outputs
     
     def _optimizer(self, loss,):
-        """
-        Optimizes weights given a loss. 
-        """
+        #优化损失函数
         def _learning_rate_decay_fn(learning_rate, global_step):
             return tf.train.exponential_decay(learning_rate, global_step, decay_steps=10000, decay_rate=0.99)
 
         starting_lr = 0.001
         starting_global_step = tf.Variable(0, trainable=False)
+        #用来网络参数
         optimizer = tf.contrib.layers.optimize_loss(
             loss=loss,
             global_step=starting_global_step,
@@ -185,9 +181,7 @@ class Seq2Seq():
         return dec_input
 
     def _lstm_cell(self, hidden_size):
-        """
-        Returns LSTM cell with dropout.
-        """
+        #层结构：LSTM->dropout
         cell = tf.nn.rnn_cell.LSTMCell(
             hidden_size,
             initializer=tf.contrib.layers.xavier_initializer())
@@ -197,15 +191,13 @@ class Seq2Seq():
         return cell
 
     def _weight_and_bias(self, in_size, out_size):
-        """
-        Initializes weights and biases.
-        """
+        #设置权重和贝叶斯
         weight = tf.Variable(tf.truncated_normal([in_size, out_size], stddev=0.01))
         bias = tf.Variable(tf.constant(1., shape=[out_size]))
 
         return weight, bias
 
-# # Train
+#训练模型 
 class Trainer():
 
     def __init__(self, batch_size, checkpoints_path, dropout):
@@ -215,9 +207,7 @@ class Trainer():
         self.dropout = dropout
 
     def train(self, model, train_data, train_size, num_steps, num_epochs, min_loss=0.3):
-        """
-        Trains a given model architecture with given train data.
-        """
+        #为了使所有op产生的随机序列在会话之间是可重复的，设置一个图级别的seed
         tf.set_random_seed(1234)
         
         with tf.Session() as sess:
@@ -326,9 +316,7 @@ class Predictor():
             raise ValueError('Unable to create model: {}'.format(e))
 
     def set_threshold(self, data_gen):
-        """
-        Calculates threshold for anomaly detection.
-        """
+        #计算异常的阈值
         
         total_loss = []
         for seq, l in data_gen:
