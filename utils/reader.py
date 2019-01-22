@@ -1,10 +1,9 @@
-from __future__ import print_function
 import random
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from vocab import Vocabulary
-from utils import get_requests_from_file, batch_generator, one_by_one_generator
+from utils.vocab import Vocabulary
+from utils.utils import get_requests_from_file, batch_generator, one_by_one_generator
 
 
 class Reader(object):

@@ -222,6 +222,10 @@ class Trainer():
                 X, L = train_data.next()
                 seq_len = np.max(L)
 
+                print('X:',X)
+                print('L:',L)
+                print('seq_len:', seq_len)
+
                 # For anomaly detection problem we reconstruct input data, so
                 # targets and inputs are identical.
                 feed_dict = {
