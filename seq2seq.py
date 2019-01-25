@@ -44,7 +44,63 @@ create_checkpoints_dir(params["checkpoints"])
 vocab = Vocabulary()
 params["vocab"] = vocab
 
-d = Data(path_normal_data)
+#d = Data(path_normal_data)
+#####
+x = np.linspace(0, 30, 105)
+y = 2 * np.sin(x)
+
+l1, = plt.plot(x[:85], y[:85], 'y', label = 'training samples')
+l2, = plt.plot(x[85:], y[85:105], 'c--', label = 'test samples')
+plt.legend(handles = [l1, l2], loc = 'upper left')
+plt.show()
+
+train_y = y.copy()
+
+noise_factor = 0.5
+train_y += np.random.randn(105) * noise_factor
+#展示原始数据
+l1, = plt.plot(x[:85], train_y[:85], 'yo', label = 'training samples')
+plt.plot(x[:85], y[:85], 'y:')
+l2, = plt.plot(x[85:], train_y[85:], 'co', label = 'test samples')
+plt.plot(x[85:], y[85:], 'c:')
+plt.legend(handles = [l1, l2], loc = 'upper left')
+plt.show()
+
+input_seq_len = 15
+output_seq_len = 20
+
+x = np.linspace(0, 30, 105)
+#train_data_x = x[:85]
+train_data_x = x[:60]
+
+def true_signal(x):
+    y = 2 * np.sin(x)
+    return y
+
+def noise_func(x, noise_factor = 1):
+    return np.random.randn(len(x)) * noise_factor
+
+def generate_y_values(x):
+    return true_signal(x) + noise_func(x)
+
+def generate_train_samples(x = train_data_x, batch_size = 10, input_seq_len = input_seq_len, output_seq_len = output_seq_len):
+
+    total_start_points = len(x) - input_seq_len - output_seq_len
+    start_x_idx = np.random.choice(range(total_start_points), batch_size)
+
+    input_seq_x = [ x[i:(i+input_seq_len) ] for i in start_x_idx]
+    output_seq_x = [ x[(i+input_seq_len):(i+input_seq_len+output_seq_len)] for i in start_x_idx]
+
+    input_seq_y = [generate_y_values(x) for x in input_seq_x]
+    output_seq_y = [generate_y_values(x) for x in output_seq_x]
+
+    #batch_x = np.array([[true_signal()]])
+    return np.array(input_seq_y), np.array(output_seq_y)
+
+input_seq, output_seq = generate_train_samples(batch_size=10)
+print('input_seq:',input_seq)
+print('output_seq:',output_seq)
+#print('d:',d)
 
 # # Model 
 # In this part of the code the Sequence-to-Sequence model for determining anomalies is defined.  
@@ -219,7 +275,8 @@ class Trainer():
             
             for step in range(1, num_steps):
                 beg_t = timeit.default_timer()
-                X, L = train_data.next()
+                #X, L = train_data.next()
+                X, L = train_data,[1,2,3,5]
                 seq_len = np.max(L)
 
                 print('X:',X)
@@ -242,6 +299,7 @@ class Trainer():
                 total_loss.append(step_loss)
                 timings.append(timeit.default_timer() - beg_t)
 
+                print('total_loss:', total_loss)
                 if step % steps_per_epoch == 0:
                     num_epoch += 1
 
@@ -268,8 +326,9 @@ t = Trainer(params["batch_size"], params["checkpoints"], params["dropout"])
 num_steps = 10 ** 6
 num_epochs = 60
 
-train_gen = d.train_generator(params["batch_size"], num_epochs)
-train_size = d.train_size
+#train_gen = d.train_generator(params["batch_size"], num_epochs)
+train_gen = input_seq 
+train_size = len(input_seq)
 
 t.train(model, train_gen, train_size, num_steps, num_epochs)
 
@@ -430,7 +489,6 @@ print('Number of samples: ', len(valid_preds))
 print('FP rate: {:.4f}'.format(np.sum(valid_preds) / len(valid_preds)))
 
 # ### Anomalous samples 
-
 # Here TP samples are showed and TP rate is computed.
 pred_data = Data(path_anomaly_data, predict=True)
 pred_gen = pred_data.predict_generator()
@@ -441,7 +499,6 @@ print('Number of samples: ', len(anomaly_preds))
 print('TP rate: {:.4f}'.format(np.sum(anomaly_preds) / len(anomaly_preds)))
 
 # # Testing 
-
 # To evaluate the results, let's compute metrics of quality: precision, recall, ROC-AUC.
 
 y_true = np.concatenate(([0] * len(valid_preds), [1] * len(anomaly_preds)), axis=0)

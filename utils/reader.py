@@ -17,7 +17,9 @@ class Reader(object):
         map_result = map(self._process_request, data)
         self.data = [x[0] for x in map_result]
         self.lengths = [x[1] for x in map_result]
-        assert len(self.data) == len(self.lengths)
+        print('self.data:',len(self.data) )
+        print('self.lengths:',self.lengths)
+        #assert len(self.data) == len(self.lengths)
 
     def _process_request(self, req):
         """
@@ -25,6 +27,7 @@ class Reader(object):
         """
         seq = self.vocab.string_to_int(req)
         l = len(seq)
+        print('l:',l)
 
         return seq, l
 

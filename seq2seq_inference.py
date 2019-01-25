@@ -60,6 +60,8 @@ def generate_train_samples(x = train_data_x, batch_size = 10, input_seq_len = in
     return np.array(input_seq_y), np.array(output_seq_y)
 
 input_seq, output_seq = generate_train_samples(batch_size=10)
+print('input_seq:',input_seq)
+print('output_seq:',output_seq)
 results = []
 for i in range(100):
     temp = generate_y_values(x)
@@ -67,9 +69,9 @@ for i in range(100):
 results = np.array(results)
 
 for i in range(100):
-    l1, = plt.plot(results[i].reshape(105, -1), 'co', lw = 0.1, alpha = 0.05, label = 'noisy training data')
+    l1, = plt.plot(results[i].reshape(105, -1), 'co', lw = 0.1, alpha = 0.05, label = 'abnormal training data')
 
-l2, = plt.plot(true_signal(x), 'm', label = 'hidden true signal')
+l2, = plt.plot(true_signal(x), 'm', label = ' normal ')
 plt.legend(handles = [l1, l2], loc = 'lower left')
 plt.show()
 
@@ -93,7 +95,7 @@ num_stacked_layers = 2
 # gradient clipping - to avoid gradient exploding
 GRADIENT_CLIPPING = 2.5 
 
-def build_graph(feed_previous = False):
+def Seq2seq(feed_previous = False):
 
     tf.reset_default_graph()
 
@@ -130,7 +132,7 @@ def build_graph(feed_previous = False):
         ]
 
         # Give a "GO" token to the decoder. 
-        # If dec_inp are fed into decoder as inputs, this is 'guided' training; otherwise only the 
+        # If dec_inp are fed into decoder as inputs, this is 'guided' training; otherwise only the
         # first element will be fed as decoder input which is then 'un-guided'
         dec_inp = [ tf.zeros_like(target_seq[0], dtype=tf.float32, name="GO") ] + target_seq[:-1]
 
@@ -138,7 +140,7 @@ def build_graph(feed_previous = False):
             cells = []
             for i in range(num_stacked_layers):
                 with tf.variable_scope('RNN_{}'.format(i)):
-                    cells.append(tf.contrib.rnn.LSTMCell(hidden_dim))
+                    cells.append(tf.nn.rnn_cell.LSTMCell(hidden_dim))
             cell = tf.contrib.rnn.MultiRNNCell(cells)
 
         def _rnn_decoder(decoder_inputs,
@@ -267,6 +269,7 @@ def build_graph(feed_previous = False):
         saver = saver, 
         reshaped_outputs = reshaped_outputs,
         )
+#end seq2seq
 
 total_iteractions = 100
 batch_size = 16
@@ -277,7 +280,7 @@ val_losses = []
 x = np.linspace(0, 30, 105)
 train_data_x = x[:85]
 
-rnn_model = build_graph(feed_previous=False)
+rnn_model = Seq2seq(feed_previous=False)
 
 saver = tf.train.Saver()
 
@@ -299,12 +302,11 @@ with tf.Session() as sess:
 
 print("Checkpoint saved at: ", save_path)
 
-
 #预测 
 #我们将模型用在测试集中进行预测
 test_seq_input = true_signal(train_data_x[-15:])
 
-rnn_model = build_graph(feed_previous=True)
+rnn_model = Seq2seq(feed_previous=True)
 
 init = tf.global_variables_initializer()
 with tf.Session() as sess:
@@ -319,9 +321,9 @@ with tf.Session() as sess:
 
     final_preds = np.concatenate(final_preds, axis = 1)
 
-l1, = plt.plot(range(85), true_signal(train_data_x[:85]), label = 'Training truth')
-l2, = plt.plot(range(85, 105), y[85:], 'yo', label = 'Test truth')
-l3, = plt.plot(range(85, 105), final_preds.reshape(-1), 'ro', label = 'Test predictions')
+l1, = plt.plot(range(85), true_signal(train_data_x[:85]), label = 'Training data')
+l2, = plt.plot(range(85, 105), y[85:], 'yo', label = 'Test data')
+l3, = plt.plot(range(85, 105), final_preds.reshape(-1), 'ro', label = 'valid predictions')
 plt.legend(handles = [l1, l2, l3], loc = 'lower left')
 plt.show()
 
