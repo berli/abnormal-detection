@@ -241,6 +241,7 @@ def Seq2seq(feed_previous = False):
         # L2 loss
         output_loss = 0
         for _y, _Y in zip(reshaped_outputs, target_seq):
+            #MSE 
             output_loss += tf.reduce_mean(tf.pow(_y - _Y, 2))
 
         # L2 regularization for weights and biases
